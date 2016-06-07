@@ -27,7 +27,7 @@ import mock
 
 from hpOneView.connection import connection
 from hpOneView.resources.task_monitor import TaskMonitor, MSG_UNKNOWN_OBJECT_TYPE, MSG_TASK_TYPE_UNRECONIZED, \
-    MSG_TIMEOUT, MSG_UNKNOWN_EXCEPTION
+    MSG_TIMEOUT, MSG_UNKNOWN_EXCEPTION, MSG_INVALID_TASK
 from hpOneView.exceptions import HPOneViewUnknownType, HPOneViewInvalidResource, HPOneViewTimeout, HPOneViewTaskError
 
 
@@ -87,10 +87,12 @@ class TaskMonitorTest(unittest.TestCase):
         self.assertEqual(ret_task, task)
 
     def test_get_associated_resource_with_task_empty(self):
-
-        task, entity = self.task_monitor.get_associated_resource({})
-        self.assertFalse(task)
-        self.assertFalse(entity)
+        try:
+            self.task_monitor.get_associated_resource({})
+        except HPOneViewUnknownType as e:
+            self.assertEqual(MSG_INVALID_TASK, e.msg)
+        else:
+            self.fail()
 
     def test_get_associated_resource_with_invalid_task(self):
         try:
@@ -156,7 +158,12 @@ class TaskMonitorTest(unittest.TestCase):
             self.fail()
 
     def test_wait_for_task_empty(self):
-        self.assertFalse(self.task_monitor.wait_for_task({}))
+        try:
+            self.task_monitor.wait_for_task({})
+        except HPOneViewUnknownType as e:
+            self.assertEqual(MSG_INVALID_TASK, e.msg)
+        else:
+            self.fail()
 
     @mock.patch.object(TaskMonitor, 'task_is_running')
     @mock.patch.object(TaskMonitor, 'get')
@@ -213,6 +220,22 @@ class TaskMonitorTest(unittest.TestCase):
 
         self.assertEqual(ret_entity, {"resource", "resource1"})
 
+    @mock.patch.object(TaskMonitor, 'task_is_running')
+    @mock.patch.object(TaskMonitor, 'get')
+    def test_wait_for_task_unexpected_result(self, mock_get, mock_is_running):
+        task = {"uri": "uri",
+                "type": "Undefined",
+                "name": "Undefined",
+                "taskState": "Completed",
+                }
+
+        mock_is_running.return_value = False
+        mock_get.return_value = task
+
+        ret_entity = self.task_monitor.wait_for_task(task.copy())
+
+        self.assertEqual(ret_entity, task.copy())
+
     @mock.patch.object(TaskMonitor, 'get_associated_resource')
     @mock.patch.object(TaskMonitor, 'task_is_running')
     @mock.patch.object(TaskMonitor, 'get')
@@ -227,9 +250,10 @@ class TaskMonitorTest(unittest.TestCase):
         mock_get.return_value = task
         mock_assoc_res.return_value = task.copy(), {"resource", "resource1"}
 
-        ret_dict = self.task_monitor.wait_for_task(task.copy())
+        ret = self.task_monitor.wait_for_task(task.copy())
 
-        self.assertEqual(ret_dict, task)
+        # may return a different type
+        self.assertEqual(True, ret)
 
     @mock.patch.object(connection, 'get')
     def test_get(self, mock_get):
