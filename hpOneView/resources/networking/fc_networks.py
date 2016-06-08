@@ -21,10 +21,11 @@
 # THE SOFTWARE.
 ###
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from __future__ import division
-from __future__ import absolute_import
+
 from future import standard_library
 
 standard_library.install_aliases()
@@ -40,7 +41,6 @@ from hpOneView.resources.resource import ResourceClient
 
 
 class FcNetworks(object):
-
     URI = '/rest/fc-networks'
 
     def __init__(self, con):
@@ -106,37 +106,63 @@ class FcNetworks(object):
         """
         return self._client.get(id)
 
-    def create(self, resource, blocking=True):
+    def create(self, resource, timeout=60):
         """
         Creates a Fibre Channel network.
 
         Args:
-            resource: dict object to create
-            blocking:
-                Wait task completion. Default is True.
+            resource (dict): object to create
+            timeout: Timeout in seconds
 
-        Returns: Created resource. When blocking=False, returns the task.
+        Returns:
+            dict: The created resource.
+        """
+        data = self.__default_values.copy()
+        data.update(resource)
+        return self._client.create(data, timeout=timeout)
+
+    def create_async(self, resource):
+        """
+        Creates a Fibre Channel network.
+
+        Args:
+            resource (dict): object to create
+
+        Returns: The associated task.
+        """
+        data = self.__default_values.copy()
+        data.update(resource)
+        return self._client.create_async(data)
+
+    def update(self, resource, timeout=60):
+        """
+        Updates a Fibre Channel network.
+
+        Args:
+            resource (dict): dict object to update
+            timeout: Timeout in seconds
+
+        Returns:
+            dict: The updated resource.
 
         """
         data = self.__default_values.copy()
         data.update(resource)
-        return self._client.create(data, blocking)
+        return self._client.update(data, timeout=timeout)
 
-    def update(self, resource, blocking=True):
+    def update_async(self, resource):
         """
         Updates a Fibre Channel network.
 
         Args:
             resource: dict object to update
-            blocking:
-                Wait task completion. Default is True.
 
-        Returns: Updated resource. When blocking=False, returns the task.
+        Returns: The associated task.
 
         """
         data = self.__default_values.copy()
         data.update(resource)
-        return self._client.update(data, blocking=blocking)
+        return self._client.update_async(data)
 
     def get_by(self, field, value):
         """

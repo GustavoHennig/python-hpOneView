@@ -124,38 +124,9 @@ class ResourceTest(unittest.TestCase):
         self.resource_client.get_by('name', 'MyFibreNetwork')
         mock_get_all.assert_called_once_with(filter="\"'name'='MyFibreNetwork'\"")
 
-    @mock.patch.object(connection, 'put')
-    def test_update_with_uri_called_once(self, mock_put):
-        dict_to_update = {"name": "test"}
-        uri = "/rest/resource/test"
-        task = None
-        body = {"body": "body"}
-
-        mock_put.return_value = task, body
-
-        response = self.resource_client.update(dict_to_update, uri=uri)
-
-        self.assertEqual(body, response)
-        mock_put.assert_called_once_with(uri, dict_to_update)
-
-    @mock.patch.object(connection, 'put')
     @mock.patch.object(TaskMonitor, 'wait_for_task')
-    def test_update_uri(self, mock_wait4task, mock_update):
-        dict_to_update = {"resource_data": "resource_data",
-                          "uri": "a_uri"}
-        task = {"task": "task"}
-        body = {"body": "body"}
-
-        mock_update.return_value = task, body
-        mock_wait4task.return_value = task
-        update_task = self.resource_client.update(dict_to_update, False)
-
-        self.assertEqual(task, update_task)
-        mock_update.assert_called_once_with("a_uri", dict_to_update)
-
     @mock.patch.object(connection, 'put')
-    @mock.patch.object(TaskMonitor, 'wait_for_task')
-    def test_update_return_task_when_not_blocking(self, mock_wait_for_task, mock_put):
+    def test_update_should_return_entity(self, mock_put, mock_wait_for_task):
         dict_to_update = {
             "resource_name": "a name",
             "uri": "a_uri",
@@ -165,44 +136,115 @@ class ResourceTest(unittest.TestCase):
         mock_put.return_value = task, dict_to_update
         mock_wait_for_task.return_value = dict_to_update
 
-        result = self.resource_client.update(dict_to_update, blocking=False)
+        result = self.resource_client.update(dict_to_update)
 
-        self.assertEqual(result, task)
+        self.assertEqual(result, dict_to_update)
+
+    @mock.patch.object(TaskMonitor, 'wait_for_task')
+    @mock.patch.object(connection, 'put')
+    def test_update_waint_should_be_called_with_timeout(self, mock_put, mock_wait_for_task):
+        timeout = 600
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri",
+        }
+        task = {"task": "task"}
+        mock_put.return_value = task, dict_to_update
+        mock_wait_for_task.return_value = dict_to_update
+
+        self.resource_client.update(dict_to_update, timeout=timeout)
+        mock_wait_for_task.assert_called_once_with(task, timeout)
 
     @mock.patch.object(connection, 'put')
-    @mock.patch.object(connection, 'get')
     @mock.patch.object(TaskMonitor, 'wait_for_task')
-    @mock.patch.object(activity, 'get_task_associated_resource')
-    def test_update_return_entity_when_blocking(self, mock_get_task_associated_resource, mock_wait4task,
-                                                mock_get, mock_put):
+    @mock.patch.object(activity, 'make_task_entity_tuple')
+    def test_not_wait_for_activity_on_update_async(self, mock_make_task_entity_tuple, mock_wait, mock_put):
+        task = {"task": "task"}
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri",
+        }
+        mock_put.return_value = task, dict_to_update
+        mock_make_task_entity_tuple.return_value = task, dict_to_update
+        mock_wait.return_value = task
+
+        self.resource_client.update_async(dict_to_update)
+
+        mock_wait.assert_not_called()
+
+    @mock.patch.object(connection, 'put')
+    def test_update_should_use_argument_uri(self, mock_put):
+        uri = "/rest/resource/test"
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri",
+        }
+        mock_put.return_value = {}, dict_to_update
+
+        self.resource_client.update(dict_to_update, uri=uri)
+        mock_put.assert_called_once_with(uri, dict_to_update)
+
+    @mock.patch.object(connection, 'put')
+    def test_update_should_use_resource_uri(self, mock_put):
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri"
+        }
+        mock_put.return_value = {}, dict_to_update
+
+        self.resource_client.update(dict_to_update, uri=None)
+        mock_put.assert_called_once_with(dict_to_update["uri"], dict_to_update)
+
+    @mock.patch.object(connection, 'put')
+    def test_update_async_should_return_task(self, mock_put):
         dict_to_update = {
             "resource_name": "a name",
             "uri": "a_uri",
         }
         task = {"task": "task"}
 
-        mock_put.return_value = task, {}
-        mock_wait4task.return_value = dict_to_update  # {"type": "TaskBlaBla"}
-        mock_get_task_associated_resource.return_value = {"resourceUri": self.URI + "path/ID"}
-        mock_get.return_value = dict_to_update
+        mock_put.return_value = task, dict_to_update
 
-        result = self.resource_client.update(dict_to_update, blocking=True)
+        result = self.resource_client.update_async(dict_to_update)
 
-        self.assertEqual(result, dict_to_update)
+        self.assertEqual(result, task)
+
+    @mock.patch.object(connection, 'put')
+    def test_update_async_should_use_argument_uri(self, mock_put):
+        uri = "/rest/resource/test"
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri",
+        }
+        mock_put.return_value = {}, dict_to_update
+
+        self.resource_client.update_async(dict_to_update, uri=uri)
+        mock_put.assert_called_once_with(uri, dict_to_update)
+
+    @mock.patch.object(connection, 'put')
+    def test_update_async_should_use_resource_uri(self, mock_put):
+        dict_to_update = {
+            "resource_name": "a name",
+            "uri": "/the/uri"
+        }
+        mock_put.return_value = {}, dict_to_update
+
+        self.resource_client.update_async(dict_to_update, uri=None)
+        mock_put.assert_called_once_with(dict_to_update["uri"], dict_to_update)
 
     @mock.patch.object(connection, 'post')
-    def test_create_uri(self, mock_post):
+    def test_create_async_shoul_use_default_uri(self, mock_post):
         dict_to_create = {
             "resource_name": "a name",
         }
         mock_post.return_value = {}, {}
 
-        self.resource_client.create(dict_to_create, False)
+        self.resource_client.create_async(dict_to_create)
 
         mock_post.assert_called_once_with(self.URI, dict_to_create)
 
     @mock.patch.object(connection, 'post')
-    def test_create_return_task_when_not_blocking(self, mock_post):
+    def test_create_async_return_task(self, mock_post):
         dict_to_create = {
             "resource_name": "a name",
         }
@@ -214,7 +256,7 @@ class ResourceTest(unittest.TestCase):
 
         mock_post.return_value = task, created_resource
 
-        result = self.resource_client.create(dict_to_create, False)
+        result = self.resource_client.create_async(dict_to_create)
 
         self.assertEqual(result, task)
 
@@ -222,8 +264,8 @@ class ResourceTest(unittest.TestCase):
     @mock.patch.object(connection, 'get')
     @mock.patch.object(TaskMonitor, 'wait_for_task')
     @mock.patch.object(activity, 'get_task_associated_resource')
-    def test_create_return_entity_when_blocking(self, mock_get_task_associated_resource, mock_wait4task,
-                                                mock_get, mock_post):
+    def test_create_return_entity(self, mock_get_task_associated_resource, mock_wait4task,
+                                  mock_get, mock_post):
         dict_to_create = {
             "resource_name": "a name",
         }
@@ -249,20 +291,20 @@ class ResourceTest(unittest.TestCase):
         mock_post.return_value = task, {}
         mock_wait4task.return_value = task
 
-        self.resource_client.create({"test", "test"}, True)
+        self.resource_client.create({"test", "test"}, 70)
 
-        mock_wait4task.assert_called_once_with({"task": "task"}, 60)
+        mock_wait4task.assert_called_once_with({"task": "task"}, 70)
 
     @mock.patch.object(connection, 'post')
     @mock.patch.object(TaskMonitor, 'wait_for_task')
     @mock.patch.object(activity, 'make_task_entity_tuple')
-    def test_not_wait_for_activity_on_create(self, mock_make_task_entity_tuple, mock_wait4task, mock_post):
+    def test_not_wait_for_activity_on_create_async(self, mock_make_task_entity_tuple, mock_wait4task, mock_post):
         task = {"task": "task"}
         mock_post.return_value = task, {}
         mock_make_task_entity_tuple.return_value = task, {}
         mock_wait4task.return_value = task
 
-        self.resource_client.create({"test", "test"}, False)
+        self.resource_client.create_async({"test", "test"})
 
         mock_wait4task.assert_not_called()
 
@@ -306,6 +348,22 @@ class ResourceTest(unittest.TestCase):
         else:
             self.fail()
 
+    def test_create_async_with_none(self):
+        try:
+            self.resource_client.create_async(None)
+        except ValueError as e:
+            self.assertTrue("Resource" in e.args[0])
+        else:
+            self.fail()
+
+    def test_create_async_with_empty_dict(self):
+        try:
+            self.resource_client.create_async({})
+        except ValueError as e:
+            self.assertTrue("Resource" in e.args[0])
+        else:
+            self.fail()
+
     def test_update_with_none(self):
         try:
             self.resource_client.update(None)
@@ -317,6 +375,22 @@ class ResourceTest(unittest.TestCase):
     def test_update_with_empty_dict(self):
         try:
             self.resource_client.update({})
+        except ValueError as e:
+            self.assertTrue("Resource" in e.args[0])
+        else:
+            self.fail()
+
+    def test_update_async_with_none(self):
+        try:
+            self.resource_client.update_async(None)
+        except ValueError as e:
+            self.assertTrue("Resource" in e.args[0])
+        else:
+            self.fail()
+
+    def test_update_async_with_empty_dict(self):
+        try:
+            self.resource_client.update_async({})
         except ValueError as e:
             self.assertTrue("Resource" in e.args[0])
         else:

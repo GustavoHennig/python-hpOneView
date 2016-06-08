@@ -105,9 +105,7 @@ class ResourceClient(object):
 
     def delete(self, resource, force=False, blocking=True, verbose=False, timeout=60):
 
-        if not resource:
-            logger.exception(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
-            raise ValueError(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
+        self.__validate_resource(resource)
 
         if isinstance(resource, dict):
             if 'uri' in resource and resource['uri']:
@@ -151,36 +149,68 @@ class ResourceClient(object):
 
         return self._connection.get(self._uri + '/' + id_or_uri)
 
-    def update(self, resource, uri=None, blocking=True):
-        if not resource:
-            logger.exception(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
-            raise ValueError(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
+    def update(self, resource, uri=None, timeout=60):
+        """
+        Updates a resource synchronously
 
-        logger.debug('Update async (uri = %s, resource = %s)' % (self._uri, str(resource)))
+        Args:
+            resource (dict): The resource to update
+            uri (str): The uri used to update the resource. If not given, it will be used the resource['uri'] attribute
+            timeout: The timeout in seconds
 
-        if not uri:
-            uri = resource['uri']
-
-        task, body = self._connection.put(uri, resource)
+        Returns:
+            dict: The updated resource
+        """
+        logger.debug('Update synchronous (resource = %s, timeout =  %i)' % (str(resource), timeout))
+        task, body = self.__update(resource, uri)
 
         if not task:
             return body
 
-        if blocking:
-            return self._task_monitor.wait_for_task(task, 60)
+        return self._task_monitor.wait_for_task(task, timeout)
 
+    def update_async(self, resource, uri=None):
+        """
+        Updates a resource asynchronously
+
+        Args:
+            resource (dict): The resource to update
+            uri (str): The uri used to update the resource. If not given, it will be used the resource['uri'] attribute
+
+        Returns:
+            The associated task
+        """
+        logger.debug('Update asynchronous (resource = %s)' % (str(resource)))
+        task, body = self.__update(resource, uri)
         return task
 
-    def create(self, resource, blocking=True):
-        if not resource:
-            logger.exception(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
-            raise ValueError(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
+    def create(self, resource, timeout=60):
+        """
+        Creates a resource synchronously
 
+        Args:
+            resource (dict): The resource to create
+            timeout: The timeout in seconds
+
+        Returns:
+            dict: The created resource
+        """
+        task = self.create_async(resource)
+        return self._task_monitor.wait_for_task(task, timeout)
+
+    def create_async(self, resource):
+        """
+        Creates a resource asynchronously
+
+        Args:
+            resource (dict): The resource to create
+
+        Returns:
+            The associated task
+        """
+        self.__validate_resource(resource)
         logger.debug('Create (uri = %s, resource = %s)' % (self._uri, str(resource)))
-
         task, entity = self._connection.post(self._uri, resource)
-        if blocking:
-            return self._task_monitor.wait_for_task(task, 60)
         return task
 
     def get_by(self, field, value):
@@ -300,7 +330,21 @@ class ResourceClient(object):
 
         return self._connection.get(uri)
 
+    def __validate_resource(self, resource):
+        if not resource:
+            logger.exception(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
+            raise ValueError(RESOURCE_CLIENT_RESOURCE_WAS_NOT_PROVIDED)
+
     def __make_query_filter(self, filter):
         filters = filter.split(",")
         formated_filter = "&filter=".join(quote(f) for f in filters)
         return "&filter=" + formated_filter
+
+    def __update(self, resource, uri=None):
+        self.__validate_resource(resource)
+        if not uri:
+            uri = resource['uri']
+
+        logger.debug('Update uri = %s' % uri)
+
+        return self._connection.put(uri, resource)
