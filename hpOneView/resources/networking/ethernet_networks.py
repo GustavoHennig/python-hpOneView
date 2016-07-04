@@ -141,7 +141,7 @@ class EthernetNetworks(object):
         uri = self.URI + '/bulk'
         self._client.create(data, uri=uri, timeout=timeout)
 
-        filter = '"\'name\' matches \'{}\_%\'"'.format(
+        filter = '"\'name\' matches \'{0}\_%\'"'.format(
             resource['namePrefix'])
         ethernet_networks = self.get_all(filter=filter)
 

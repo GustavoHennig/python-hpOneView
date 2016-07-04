@@ -40,14 +40,13 @@ __status__ = 'Development'
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ###
-
 import sys
 
 PYTHON_VERSION = sys.version_info[:3]
 PY2 = (PYTHON_VERSION[0] == 2)
 if PY2:
-    if PYTHON_VERSION < (2, 7, 9):
-        raise Exception('Must use Python 2.7.9 or later')
+    if PYTHON_VERSION < (2, 6, 0):
+        raise Exception('Must use Python 2.6.0 or later')
 elif PYTHON_VERSION < (3, 4):
     raise Exception('Must use Python 3.4 or later')
 
@@ -65,6 +64,16 @@ from hpOneView.fcsans import *
 from hpOneView.facilities import *
 from hpOneView.uncategorized import *
 from hpOneView.exception_handler import handle_exceptions
+
+try:
+    from logging import NullHandler
+except ImportError:
+    from logging import Handler
+
+    class NullHandler(Handler):
+        def emit(self, record):
+             pass
+    logging.NullHandler = NullHandler
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
