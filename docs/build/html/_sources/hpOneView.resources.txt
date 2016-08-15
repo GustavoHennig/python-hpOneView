@@ -1,0 +1,44 @@
+hpOneView.resources package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    hpOneView.resources.activity
+    hpOneView.resources.data_services
+    hpOneView.resources.facilities
+    hpOneView.resources.fc_sans
+    hpOneView.resources.networking
+    hpOneView.resources.servers
+    hpOneView.resources.settings
+    hpOneView.resources.storage
+
+Submodules
+----------
+
+hpOneView.resources.resource module
+-----------------------------------
+
+.. automodule:: hpOneView.resources.resource
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+hpOneView.resources.task_monitor module
+---------------------------------------
+
+.. automodule:: hpOneView.resources.task_monitor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: hpOneView.resources
+    :members:
+    :undoc-members:
+    :show-inheritance:

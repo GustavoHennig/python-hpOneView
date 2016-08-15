@@ -10,7 +10,8 @@
 *.egg
 *.egg-info
 dist
-build
+!docs/build
+build/*
 eggs
 parts
 bin

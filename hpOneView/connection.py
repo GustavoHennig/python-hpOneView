@@ -2,7 +2,7 @@
 
 """
 connection.py
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 This module maintains communication with the appliance
 """

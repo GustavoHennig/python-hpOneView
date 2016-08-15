@@ -2,7 +2,7 @@
 
 """
 exceptions.py
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 This module implements exceptions HPE OneView REST API
 """
