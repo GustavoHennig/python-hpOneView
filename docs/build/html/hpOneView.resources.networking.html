@@ -165,15 +165,16 @@
 <dl class="method">
 <dt id="hpOneView.resources.networking.connection_templates.ConnectionTemplates.get">
 <code class="descname">get</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hpOneView/resources/networking/connection_templates.html#ConnectionTemplates.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hpOneView.resources.networking.connection_templates.ConnectionTemplates.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the connection template with the specified ID.
-:param id: ID of connection template.</p>
+<dd><p>Gets the connection template with the specified ID.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> &#8211; ID of connection template.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
 </tr>
 </tbody>
 </table>
@@ -431,9 +432,8 @@ and constrained by start and count parameters.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>start</strong> &#8211; <p>The first item to return, using 0-based indexing.</p>
-<p>If not specified, the default is 0 - start with the first available item.</p>
-</li>
+<li><strong>start</strong> &#8211; The first item to return, using 0-based indexing.
+If not specified, the default is 0 - start with the first available item.</li>
 <li><strong>count</strong> &#8211; The number of resources to return. A count of -1 requests all the items.
 The actual number of items in the response may differ from the requested
 count if the sum of start and count exceed the total number of items.</li>
