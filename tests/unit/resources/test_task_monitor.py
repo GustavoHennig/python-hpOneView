@@ -210,11 +210,16 @@ class TaskMonitorTest(unittest.TestCase):
         self.assertRaises(EnvironmentError, self.task_monitor.is_task_running, {"uri": "uri"},
                           conn_failure_control)
 
+    @mock.patch('time.time')
+    @mock.patch('time.sleep', return_value=None)
     @mock.patch.object(TaskMonitor, 'is_task_running')
-    def test_wait_for_task_timeout(self, mock_is_running):
+    def test_wait_for_task_timeout(self, mock_is_running, mock_sleep, mock_time):
+
+        ini_time = 1485884664.785565
+        mock_time.side_effect = [ini_time, ini_time + 1, ini_time + 3, ini_time + 6, ini_time + 10, ini_time + 15]
 
         mock_is_running.return_value = True
-        timeout = 2
+        timeout = 5
 
         try:
             self.task_monitor.wait_for_task({"uri": "uri"}, timeout)
